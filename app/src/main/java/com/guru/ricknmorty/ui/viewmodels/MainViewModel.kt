@@ -57,7 +57,7 @@ class MainViewModel constructor(apiManager: IApiManager, resources: Resources) :
                 mSearchStringPublishSubject
                         .map { searchString ->
                             isSearchFieldEmpty = searchString.isEmpty()
-                             notifyPropertyChanged(BR.clearSearchVisible)
+                            notifyPropertyChanged(BR.clearSearchVisible)
                             searchString
                         }
                         .debounce(1, TimeUnit.SECONDS)
@@ -83,7 +83,7 @@ class MainViewModel constructor(apiManager: IApiManager, resources: Resources) :
     fun clearSearch() {
         mCurrentSearchString = ""
         isSearchFieldEmpty = true
-       notifyPropertyChanged(BR.searchQueryString)
+        notifyPropertyChanged(BR.searchQueryString)
     }
 
     @Bindable
@@ -147,7 +147,7 @@ class MainViewModel constructor(apiManager: IApiManager, resources: Resources) :
 
     private fun setFistLoading(loading: Boolean) {
         mFirstLoading = loading
-         notifyPropertyChanged(BR.firstLoading)
+        notifyPropertyChanged(BR.firstLoading)
     }
 
     private fun setLoading(loading: Boolean) {
@@ -156,13 +156,18 @@ class MainViewModel constructor(apiManager: IApiManager, resources: Resources) :
         } else if (!loading) {
             mItems.remove(mProgressLoader)
         }
-       notifyPropertyChanged(BR.characters)
+        notifyPropertyChanged(BR.characters)
     }
 
     override fun handlerError(throwable: Throwable) {
         super.handlerError(throwable)
         handleLoading(false)
-        mMessageNotifier.value = MessageWrapper.withSnackBar(throwable.message ?: return)
+        val error = "HTTP 404 Not Found"
+        if (throwable.message.equals(error)) {
+            mMessageNotifier.value = MessageWrapper.withSnackBar(mResources.getString(R.string.no_results))
+        } else {
+            mMessageNotifier.value = MessageWrapper.withSnackBar(mResources.getString(R.string.something_went_wrong))
+        }
     }
 
     class Factory @Inject constructor(resources: Resources, apiManager: ApiManager) : ViewModelProvider.NewInstanceFactory() {
