@@ -10,10 +10,8 @@ open class LoadingIndicatorViewModel : BaseViewModel() {
 
     private var mFirstLoading: Boolean = false
 
-    private var mError = false
-
     protected var mPageDescriptor = PageDescriptor
-            .setPageSize(24)
+            .setPageSize(20)
             .setStartPage(1)
             .setThreshold(5)
             .build()
@@ -30,10 +28,6 @@ open class LoadingIndicatorViewModel : BaseViewModel() {
         }
     }
 
-    override fun handlerError(throwable: Throwable) {
-        super.handlerError(throwable)
-    }
-
     private fun setFistLoading(loading: Boolean) {
         mFirstLoading = loading
         notifyPropertyChanged(BR.firstLoading)
@@ -45,7 +39,7 @@ open class LoadingIndicatorViewModel : BaseViewModel() {
         } else if (!loading) {
             mItems.remove(mProgressLoader)
         }
-       notifyPropertyChanged(BR.characters)
+        notifyPropertyChanged(BR.characters)
     }
 
     @Bindable
