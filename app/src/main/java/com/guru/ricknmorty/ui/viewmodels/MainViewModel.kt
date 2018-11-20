@@ -24,7 +24,7 @@ import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class MainViewModel constructor(apiManager: IApiManager, resources: Resources) : LoadingIndicatorViewModel() {
+open class MainViewModel constructor(apiManager: IApiManager, resources: Resources) : LoadingIndicatorViewModel() {
 
     @Bindable
     fun getItemDecoration(): RecyclerView.ItemDecoration = mItemDecoration
@@ -44,7 +44,7 @@ class MainViewModel constructor(apiManager: IApiManager, resources: Resources) :
                         .subscribe({
                             handleLoading(false)
                             notifyPropertyChanged(BR.characters)
-                        }, this::handlerError)
+                        }) { this.handleError(mResources, it) }
     }
 
     override fun onCreate() {
@@ -62,7 +62,7 @@ class MainViewModel constructor(apiManager: IApiManager, resources: Resources) :
                         }
                         .debounce(1, TimeUnit.SECONDS)
                         .filter { s -> !s.isEmpty() }
-                        .subscribe(this::search, Throwable::printStackTrace)
+                        .subscribe(this::search) { this.handleError(mResources, it) }
     }
 
     open fun search(repo: String) {
@@ -92,8 +92,8 @@ class MainViewModel constructor(apiManager: IApiManager, resources: Resources) :
     fun getItemClickListener(): ItemClickListener {
         return object : ItemClickListener {
             override fun onItemClicked(view: View, item: Any) {
-                val repositoryViewModel = item as? CharacterItemViewModel ?: return
-                mItemClickNotifier.value = ClickItemWrapper.withAdditionalData(0, repositoryViewModel.getCharacter())
+                val characterItemViewModel = item as? CharacterItemViewModel ?: return
+                mItemClickNotifier.value = ClickItemWrapper.withAdditionalData(0, characterItemViewModel.getCharacter())
             }
         }
     }
@@ -159,14 +159,13 @@ class MainViewModel constructor(apiManager: IApiManager, resources: Resources) :
         notifyPropertyChanged(BR.characters)
     }
 
-    override fun handlerError(throwable: Throwable) {
-        super.handlerError(throwable)
+    open fun handleError(resources: Resources, throwable: Throwable) {
         handleLoading(false)
         val error = "HTTP 404 Not Found"
         if (throwable.message.equals(error)) {
-            mMessageNotifier.value = MessageWrapper.withSnackBar(mResources.getString(R.string.no_results))
+            mMessageNotifier.value = MessageWrapper.withSnackBar(resources.getString(R.string.no_results))
         } else {
-            mMessageNotifier.value = MessageWrapper.withSnackBar(mResources.getString(R.string.something_went_wrong))
+            mMessageNotifier.value = MessageWrapper.withSnackBar(resources.getString(R.string.something_went_wrong))
         }
     }
 

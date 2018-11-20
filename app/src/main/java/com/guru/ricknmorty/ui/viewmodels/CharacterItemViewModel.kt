@@ -16,4 +16,8 @@ class CharacterItemViewModel constructor(character: Character) {
     fun getCharacter() = character
 
     fun getImage() = character.image
+
+    fun getType() = character.type
+
+    fun getSpecies() = character.species
 }

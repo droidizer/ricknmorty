@@ -18,14 +18,14 @@ class ApiManager @Inject constructor(apiService: ApiService) : IApiManager {
     private var mSubscribersDisposable = Disposables.disposed()
 
     override fun searchCharacter(query: String, page: Int): Observable<List<Character>> {
-        val repositories: BehaviorSubject<List<Character>> = BehaviorSubject.create()
+	        val characters: BehaviorSubject<List<Character>> = BehaviorSubject.create()
         mSearchDisposable.dispose()
         mSearchDisposable = mApiService.searchCharacters(page, query)
                 .filter { model: CharactersResponseModel -> !model.items.isEmpty() }
                 .subscribe({
-                    repositories.onNext(it.items)
-                }, repositories::onError, repositories::onComplete)
-        return repositories.hide()
+                    characters.onNext(it.items)
+                }, characters::onError, characters::onComplete)
+        return characters.hide()
     }
 
     override fun getCharacters(page: Int): Observable<List<Character>> {
