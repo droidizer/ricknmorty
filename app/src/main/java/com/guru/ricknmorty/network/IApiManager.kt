@@ -9,4 +9,5 @@ interface IApiManager {
     fun getCharacters(page: Int): Observable<List<Character>>
 
     fun searchCharacter(query: String, page: Int): Observable<List<Character>>
+
 }

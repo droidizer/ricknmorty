@@ -3,7 +3,7 @@ package com.guru.ricknmorty.ui.viewmodels
 import com.guru.ricknmorty.models.Character
 
 
-class CharacterItemViewModel constructor(character: Character) {
+class CharacterItemViewModel (character: Character) {
 
     private val character = character
 

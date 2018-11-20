@@ -62,12 +62,37 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `test_all_characters_data_set`() {
+        val pageDescriptor = mMainViewModel.getNextPage()
+        Mockito.`when`(mApiManager
+                .getCharacters(pageDescriptor.getCurrentPage()))
+                .thenReturn(Observable.just(getAllCharacters()))
+
+        mMainViewModel.loadCharacterList()
+        org.junit.Assert.assertTrue(!mMainViewModel.getCharacters().isEmpty())
+        org.junit.Assert.assertTrue(mMainViewModel.getCharacters().count() == 20)
+        org.junit.Assert.assertTrue(mMainViewModel.getCharacters()[0] is CharacterItemViewModel)
+    }
+
+    @Test
+    fun `test_all_characters_empty_data`() {
+        val pageDescriptor = mMainViewModel.getNextPage()
+        Mockito.`when`(mApiManager
+                .getCharacters(pageDescriptor.getCurrentPage()))
+                .thenReturn(Observable.just(ArrayList()))
+
+        mMainViewModel.loadCharacterList()
+        org.junit.Assert.assertTrue(mMainViewModel.getCharacters().isEmpty())
+        org.junit.Assert.assertTrue(mMainViewModel.getCharacters().count() == 0)
+    }
+
+    @Test
     fun `test_search_valid_data_set`() {
         val pageDescriptor = mMainViewModel.getNextPage()
         Mockito.`when`(mApiManager
                 .searchCharacter("Rick",
                         pageDescriptor.getCurrentPage()))
-                .thenReturn(Observable.just(getCharacters()))
+                .thenReturn(Observable.just(getAllRickCharacters()))
 
         mMainViewModel.setSearchQueryStringChanged("Rick")
         org.junit.Assert.assertTrue(!mMainViewModel.getCharacters().isEmpty())
@@ -96,8 +121,14 @@ class MainViewModelTest {
         org.junit.Assert.assertTrue(mMainViewModel.getSearchQueryString().isNullOrEmpty())
     }
 
-    private fun getCharacters(): List<Character> {
-        val characterResponseModel = JsonFileReader.read(javaClass.classLoader.getResourceAsStream("data.json"),
+    private fun getAllRickCharacters(): List<Character> {
+        val characterResponseModel = JsonFileReader.read(javaClass.classLoader.getResourceAsStream("rick.json"),
+                Gson(), CharactersResponseModel::class.java).blockingFirst()
+        return characterResponseModel.items
+    }
+
+    private fun getAllCharacters(): List<Character> {
+        val characterResponseModel = JsonFileReader.read(javaClass.classLoader.getResourceAsStream("characters.json"),
                 Gson(), CharactersResponseModel::class.java).blockingFirst()
         return characterResponseModel.items
     }

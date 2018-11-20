@@ -33,18 +33,19 @@ open class MainViewModel constructor(apiManager: IApiManager, resources: Resourc
     fun getNextPage() = mPageDescriptor
 
     fun setNextPage(pageDescriptor: PageDescriptor) {
-        mRepositoriesDisposable.dispose()
         handleLoading(true)
-        mRepositoriesDisposable =
-                mApiManager.searchCharacter(mCurrentSearchString, pageDescriptor.getCurrentPage())
-                        .map {
-                            it.map { mItems.add(CharacterItemViewModel(it)) }
-                        }
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe({
-                            handleLoading(false)
-                            notifyPropertyChanged(BR.characters)
-                        }) { this.handleError(mResources, it) }
+        if (mCharactersDisposable.isDisposed) {
+            mCharactersDisposable =
+                    mApiManager.searchCharacter(mCurrentSearchString, pageDescriptor.getCurrentPage())
+                            .map {
+                                it.map { mItems.add(CharacterItemViewModel(it)) }
+                            }
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe({
+                                handleLoading(false)
+                                notifyPropertyChanged(BR.characters)
+                            }) { this.handleError(mResources, it) }
+        }
     }
 
     override fun onCreate() {
@@ -52,17 +53,42 @@ open class MainViewModel constructor(apiManager: IApiManager, resources: Resourc
         subscribeForSearchQueryChanges()
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (mItems.isEmpty()) {
+            loadCharacterList()
+        }
+    }
+
+    fun loadCharacterList() {
+        handleLoading(true)
+        if (mCharacterListDisposable.isDisposed) {
+            mCharacterListDisposable = mApiManager.getCharacters(mPageDescriptor.getCurrentPage())
+                    .map {
+                        it.map { mItems.add(CharacterItemViewModel(it)) }
+                    }
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({
+                        handleLoading(false)
+
+                        notifyPropertyChanged(BR.characters)
+                    }) { this.handleError(mResources, it) }
+        }
+    }
+
     private fun subscribeForSearchQueryChanges() {
-        mSearchNotifierDisposable =
-                mSearchStringPublishSubject
-                        .map { searchString ->
-                            isSearchFieldEmpty = searchString.isEmpty()
-                            notifyPropertyChanged(BR.clearSearchVisible)
-                            searchString
-                        }
-                        .debounce(1, TimeUnit.SECONDS)
-                        .filter { s -> !s.isEmpty() }
-                        .subscribe(this::search) { this.handleError(mResources, it) }
+        if (mSearchNotifierDisposable.isDisposed) {
+            mSearchNotifierDisposable =
+                    mSearchStringPublishSubject
+                            .map { searchString ->
+                                isSearchFieldEmpty = searchString.isEmpty()
+                                notifyPropertyChanged(BR.clearSearchVisible)
+                                searchString
+                            }
+                            .debounce(1, TimeUnit.SECONDS)
+                            .filter { s -> !s.isEmpty() }
+                            .subscribe(this::search) { this.handleError(mResources, it) }
+        }
     }
 
     open fun search(repo: String) {
@@ -108,9 +134,11 @@ open class MainViewModel constructor(apiManager: IApiManager, resources: Resourc
 
     private val mApiManager = apiManager
 
-    private var mRepositoriesDisposable = Disposables.disposed()
+    private var mCharactersDisposable = Disposables.disposed()
 
     private var mSearchNotifierDisposable = Disposables.disposed()
+
+    private var mCharacterListDisposable = Disposables.disposed()
 
     private val mSearchStringPublishSubject: PublishSubject<String> = PublishSubject.create()
 
@@ -140,9 +168,10 @@ open class MainViewModel constructor(apiManager: IApiManager, resources: Resourc
     fun getItemClickNotifier() = mItemClickNotifier
 
     override fun onCleared() {
-        super.onCleared()
-        mRepositoriesDisposable.dispose()
+        mCharactersDisposable.dispose()
         mSearchNotifierDisposable.dispose()
+        mCharacterListDisposable.dispose()
+        super.onCleared()
     }
 
     private fun setFistLoading(loading: Boolean) {
