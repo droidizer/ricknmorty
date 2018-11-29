@@ -7,7 +7,6 @@ Features:
 
 1. Rick and Morty Characters list. 
 2. Search for a single character or string. 
-3. Added Unit tests for the business logic. 
 
 Note: 
 
